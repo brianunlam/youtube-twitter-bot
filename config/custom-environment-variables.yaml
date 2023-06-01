@@ -1,0 +1,7 @@
+youtubeApiKey: YOUTUBE_API_KEY
+queue:
+  url: QUEUE_URL
+  hostname: QUEUE_HOST
+  username: QUEUE_USER
+  password: QUEUE_PASSWORD
+  port: QUEUE_PORT

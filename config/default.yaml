@@ -1,0 +1,23 @@
+youtubeApiKey: ''
+
+queries:
+  - cute-pitbulls:
+    youtubeQuery:
+      q: 'pitbull cute funny'
+      order: 'date'
+      part: ['id','snippet']
+      maxResults: 20
+    filterByLength:
+      min: 0
+      max: Infinity
+  - bizarrap
+    youtubeQuery:
+      q: ''
+      order: 'date'
+      part: ['id','snippet']
+      maxResults: 20
+    filterByLength:
+      min: 0
+      max: Infinity
+queue:
+  url: QUEUE_URL
