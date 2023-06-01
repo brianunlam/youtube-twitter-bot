@@ -21,7 +21,9 @@ export async function getYoutubeQueryResults(
   })) as any;
   const allItems = result?.data?.items || [];
   const lastItemDate = allItems[0]?.snippet.publishedAt;
-  const destPath = lastItemDate ? resultsPath : `${resultsPath}_empty`;
+  const destPath = lastItemDate
+    ? `${resultsPath}.json`
+    : `${resultsPath}_empty.json`;
   if (lastItemDate) {
     await writeFile(destPath, JSON.stringify(result, null, 2), 'utf8');
     const onlyVideos = allItems.filter(
@@ -52,7 +54,7 @@ export async function getYoutubeQueryResults(
         return acc;
       }, {});
       await writeFile(
-        `${destPath}details`,
+        `${resultsPath}.json`,
         JSON.stringify(detailsResponse, null, 2),
         'utf8'
       );

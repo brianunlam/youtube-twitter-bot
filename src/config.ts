@@ -22,4 +22,7 @@ const config: Config = {
   },
 };
 
+// it is used for debugging and to keep track of last published videos
+export const TEMP_LAST_YOUTUBE_REQUEST_PATH = './temp/youtuberesults';
+
 export default config;
