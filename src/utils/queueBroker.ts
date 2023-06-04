@@ -10,8 +10,8 @@ import config from 'config';
 import { MILLISECONDS_IN_SECOND } from '../constants';
 import { safeStringify } from './safeStringify';
 
-const WORK_PREFIX = 'work';
-const LOBBY_PREFIX = 'lobby';
+const WORK_SUFFIX = 'work';
+const LOBBY_SUFFIX = 'lobby';
 
 const queueCfg: QueueBrokerOptions | undefined = config.get('queue');
 
@@ -167,10 +167,10 @@ export class QueueBroker {
   }
 
   async ensureChannelAndDelayedQueue(name: string, options?: ConsumerQueueCfg) {
-    const nameWithPrefix = `${WORK_PREFIX}--${name}`;
-    console.log({ nameWithPrefix });
+    const nameWithSuffix = `${name}--${WORK_SUFFIX}`;
+    console.log({ nameWithSuffix });
     await this.ready;
-    if (!this.channelsByQueueName[nameWithPrefix]) {
+    if (!this.channelsByQueueName[nameWithSuffix]) {
       const channel = await this.connection!.createChannel();
       if (options?.maxConcurrency) {
         channel.prefetch(options.maxConcurrency);
@@ -185,13 +185,13 @@ export class QueueBroker {
         exclusive: false,
       })) as Replies.AssertQueue;
       await channel.bindQueue(queue.queue, exchangeDLX, routingKeyDLX);
-      this.channelsByQueueName[nameWithPrefix] = {
+      this.channelsByQueueName[nameWithSuffix] = {
         channel,
         queue,
-        queueId: nameWithPrefix,
+        queueId: nameWithSuffix,
       };
     }
-    return this.channelsByQueueName[nameWithPrefix];
+    return this.channelsByQueueName[nameWithSuffix];
   }
 
   async subscribe(queueName: string, options: ConsumerQueueCfg) {
@@ -234,19 +234,23 @@ export class QueueBroker {
   }
 
   async ensureChannelAndLobby(name: string, options?: ConsumerQueueCfg) {
-    const nameWithPrefix = `${LOBBY_PREFIX}--${name}`;
+    const nameWithSuffix = `${name}--${LOBBY_SUFFIX}`;
     await this.ready;
-    if (!this.channelsByQueueName[nameWithPrefix]) {
+    if (!this.channelsByQueueName[nameWithSuffix]) {
       const channel = await this.connection!.createChannel();
       if (options?.maxConcurrency) {
         channel.prefetch(options.maxConcurrency);
       }
       const exchange = `${name}Exchange`;
-      const queueName = `${name}Lobby`;
+      const queueName = `${name}-${LOBBY_SUFFIX}`;
       const exchangeDLX = `${name}ExDLX`;
       const routingKeyDLX = `${name}RoutingKeyDLX`;
+      const queueDLX = `${name}-${WORK_SUFFIX}`;
       await channel.assertExchange(exchange, 'direct', {
         durable: true,
+      });
+      await channel.assertQueue(queueDLX, {
+        exclusive: false,
       });
       const queue = (await channel?.assertQueue(queueName, {
         exclusive: false,
@@ -254,13 +258,13 @@ export class QueueBroker {
         deadLetterRoutingKey: routingKeyDLX,
       })) as Replies.AssertQueue;
       await channel?.bindQueue(queue.queue, exchange, '');
-      this.channelsByQueueName[nameWithPrefix] = {
+      this.channelsByQueueName[nameWithSuffix] = {
         channel,
         queue,
-        queueId: nameWithPrefix,
+        queueId: nameWithSuffix,
       };
     }
-    return this.channelsByQueueName[nameWithPrefix];
+    return this.channelsByQueueName[nameWithSuffix];
   }
 
   async sendDelayedMessage(
@@ -269,7 +273,10 @@ export class QueueBroker {
     options: DelayedQueueCfg
   ) {
     const { channel, queue } = await this.ensureChannelAndLobby(queueName);
-    const queueId = options.ttl === 0 ? `${queueName}Work` : queue.queue;
+    const sendToWorkQueue = options.ttl === 0;
+    const queueId = sendToWorkQueue
+      ? `${queueName}-${WORK_SUFFIX}`
+      : queue.queue;
     return channel.sendToQueue(queueId, Buffer.from(JSON.stringify(content)), {
       ...(options.ttl > 0 ? { expiration: options.ttl } : {}),
     });
