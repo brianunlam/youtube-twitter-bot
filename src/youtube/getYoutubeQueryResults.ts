@@ -1,31 +1,35 @@
-import { google } from 'googleapis';
+// eslint-disable-next-line camelcase
+import { google, youtube_v3 } from 'googleapis';
 import { writeFile } from 'fs/promises';
 import config from '../config';
 import { convertDurationToSeconds } from '../utils/convertDurationToSeconds';
 
-const { youtubeApiKey, youtubeQuery } = config;
-
-const yt = google.youtube({
-  version: 'v3',
-  auth: youtubeApiKey,
-});
+const { youtubeApiKey } = config;
 
 export async function getYoutubeQueryResults(
   resultsPath: string,
-  publishedAfter?: string
+  options: {
+    youtubeApiKey: string;
+    // eslint-disable-next-line camelcase
+    youtubeQuery: youtube_v3.Params$Resource$Search$List;
+  }
 ) {
-  const result = (await yt.search.list({
-    ...youtubeQuery,
-    maxResults: 50,
-    publishedAfter,
-  })) as any;
+  const yt = google.youtube({
+    version: 'v3',
+    auth: options.youtubeApiKey || youtubeApiKey,
+  });
+  const queryParams = {
+    ...options.youtubeQuery,
+    part: ['id', 'snippet'],
+  };
+  const result = (await yt.search.list(queryParams)) as any;
   const allItems = result?.data?.items || [];
   const lastItemDate = allItems[0]?.snippet.publishedAt;
   const destPath = lastItemDate
     ? `${resultsPath}.json`
     : `${resultsPath}_empty.json`;
+  await writeFile(destPath, JSON.stringify(result, null, 2), 'utf8');
   if (lastItemDate) {
-    await writeFile(destPath, JSON.stringify(result, null, 2), 'utf8');
     const onlyVideos = allItems.filter(
       (item: any) => item.id.kind === 'youtube#video'
     );
@@ -54,7 +58,7 @@ export async function getYoutubeQueryResults(
         return acc;
       }, {});
       await writeFile(
-        `${resultsPath}.json`,
+        `${resultsPath}_detailed.json`,
         JSON.stringify(detailsResponse, null, 2),
         'utf8'
       );

@@ -8,11 +8,12 @@ function incrementOneSecond(date: string) {
 
 export async function getLastVideoPublishTime(source: string) {
   try {
-    await stat(source);
-    const result = JSON.parse(await readFile(source, 'utf-8'));
+    const fileName = `${source}.json`;
+    await stat(fileName);
+    const result = JSON.parse(await readFile(fileName, 'utf-8'));
     const lastVideoPublishTime = result?.data?.items?.[0]?.snippet.publishedAt;
     return lastVideoPublishTime && incrementOneSecond(lastVideoPublishTime);
-  } catch {
+  } catch (e) {
     /* return nothing */
   }
 }
