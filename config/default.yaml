@@ -1,23 +1,30 @@
 youtubeApiKey: ''
 
 queries:
-  - cute-pitbulls:
-    youtubeQuery:
-      q: 'pitbull cute funny'
-      order: 'date'
-      part: ['id','snippet']
-      maxResults: 20
-    filterByLength:
-      min: 0
-      max: Infinity
-  - bizarrap
+  - name: bizarrap
     youtubeQuery:
       q: ''
-      order: 'date'
-      part: ['id','snippet']
       maxResults: 20
-    filterByLength:
-      min: 0
-      max: Infinity
+      channelId: 'UCmS75G-98QihSusY7NfCZtw' #
+    checkInterval: 1 #minutes
+    handler: queue
+    filters:
+      - id: filterByLength
+        args:
+          min: 0
+          max: Infinity
+
+  - name: funny-pitbulls
+    youtubeQuery:
+      q: 'pitbul funny cute'
+      maxResults: 20
+    checkInterval: 15 #minutes
+    handler: queue
+    filters:
+      - id: filterByLength
+        args:
+          min: 0
+          max: 20
+
 queue:
   url: QUEUE_URL
