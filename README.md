@@ -4,11 +4,10 @@ A basic repository with jest, typescript, ts-node, eslint, prettier and basic ru
 Just fork it and you are ready to go.
 
 # Tasks
-Create index.js
+Add consumer
+Handle errors
 Improve types
 Add logging library
-Create folders
-Create new Repo and commits
 Add some tests (using AI)
 Improve package.json scripts
 Start Using pm2
